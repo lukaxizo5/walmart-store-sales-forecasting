@@ -15,6 +15,14 @@ from .validation import (
     competition_like_holdout,
     infer_forecast_horizon,
 )
+from .baselines import SeasonalNaiveBaseline
+from .features import (
+    add_basic_features,
+    add_calendar_features,
+    add_exact_lag_features,
+    add_missing_indicators,
+)
+from .validation import expanding_window_splits
 
 __all__ = [
     "ChronologicalSplit",
@@ -28,4 +36,10 @@ __all__ = [
     "mean_absolute_error",
     "root_mean_squared_error",
     "weighted_mae",
+    "SeasonalNaiveBaseline",
+    "add_basic_features",
+    "add_calendar_features",
+    "add_exact_lag_features",
+    "add_missing_indicators",
+    "expanding_window_splits",
 ]

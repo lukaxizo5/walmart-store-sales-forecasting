@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import os
 from contextlib import contextmanager
-from typing import Any, Iterator
+from typing import Any, Iterator, Mapping
 
 import dagshub
 import mlflow
@@ -20,9 +20,29 @@ def get_env(name: str) -> str:
     value = os.getenv(name)
 
     if not value:
-        raise RuntimeError(f"Missing environment variable: {name}")
+        raise RuntimeError(
+            f"Missing environment variable: {name}"
+        )
 
     return value
+
+
+def prepare_parameters(
+    parameters: Mapping[str, Any],
+) -> dict[str, Any]:
+    prepared = {}
+
+    for name, value in parameters.items():
+        if isinstance(value, (list, tuple, dict)):
+            prepared[name] = json.dumps(
+                value,
+                default=str,
+                sort_keys=True,
+            )
+        else:
+            prepared[name] = value
+
+    return prepared
 
 
 def setup_mlflow(experiment_name: str) -> None:
@@ -35,80 +55,42 @@ def setup_mlflow(experiment_name: str) -> None:
     mlflow.set_experiment(experiment_name)
 
 
-def prepare_parameters(
-    parameters: dict[str, Any],
-) -> dict[str, Any]:
-    prepared = {}
+@contextmanager
+def mlflow_run(
+    experiment_name: str,
+    run_name: str,
+    parameters: Mapping[str, Any] | None = None,
+    tags: Mapping[str, str] | None = None,
+) -> Iterator[mlflow.ActiveRun]:
+    setup_mlflow(experiment_name)
 
-    for key, value in parameters.items():
-        if isinstance(value, (list, tuple, dict)):
-            prepared[key] = json.dumps(value, default=str)
-        else:
-            prepared[key] = value
+    with mlflow.start_run(run_name=run_name) as run:
+        if parameters:
+            mlflow.log_params(
+                prepare_parameters(parameters)
+            )
 
-    return prepared
+        if tags:
+            mlflow.set_tags(dict(tags))
+
+        yield run
 
 
 @contextmanager
-def tracked_run(
-    experiment_name: str,
+def wandb_run(
     run_name: str,
-    parameters: dict[str, Any] | None = None,
-    wandb_group: str | None = None,
+    group: str,
+    config: Mapping[str, Any] | None = None,
     job_type: str = "training",
-    use_wandb: bool = True,
-) -> Iterator[Any | None]:
-    setup_mlflow(experiment_name)
-
-    parameters = parameters or {}
-    mlflow_parameters = prepare_parameters(parameters)
-
-    with mlflow.start_run(run_name=run_name):
-        if mlflow_parameters:
-            mlflow.log_params(mlflow_parameters)
-
-        if not use_wandb:
-            yield None
-            return
-
-        with wandb.init(
-            entity=get_env("WANDB_ENTITY"),
-            project=get_env("WANDB_PROJECT"),
-            name=run_name,
-            group=wandb_group,
-            job_type=job_type,
-            config=parameters,
-        ) as wandb_run:
-            yield wandb_run
-
-
-def log_metrics(
-    metrics: dict[str, float],
-    wandb_run: Any | None = None,
-    step: int | None = None,
-) -> None:
-    metrics = {
-        name: float(value)
-        for name, value in metrics.items()
-    }
-
-    if step is None:
-        mlflow.log_metrics(metrics)
-    else:
-        mlflow.log_metrics(metrics, step=step)
-
-    if wandb_run is not None:
-        if step is None:
-            wandb_run.log(metrics)
-        else:
-            wandb_run.log(metrics, step=step)
-
-
-def log_artifact(
-    path: str,
-    artifact_path: str | None = None,
-) -> None:
-    mlflow.log_artifact(
-        path,
-        artifact_path=artifact_path,
-    )
+    tags: list[str] | None = None,
+) -> Iterator[Any]:
+    with wandb.init(
+        entity=get_env("WANDB_ENTITY"),
+        project=get_env("WANDB_PROJECT"),
+        name=run_name,
+        group=group,
+        job_type=job_type,
+        config=dict(config or {}),
+        tags=tags,
+    ) as run:
+        yield run

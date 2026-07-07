@@ -122,3 +122,87 @@ def competition_like_holdout(
         validation_weeks=validation_weeks,
         date_column=date_column,
     )
+
+def expanding_window_splits(
+    data: pd.DataFrame,
+    n_splits: int = 3,
+    validation_weeks: int = 13,
+    date_column: str = "Date",
+) -> list[ChronologicalSplit]:
+    if n_splits <= 0:
+        raise ValueError("n_splits must be positive.")
+
+    if validation_weeks <= 0:
+        raise ValueError("validation_weeks must be positive.")
+
+    unique_dates = (
+        pd.Series(pd.to_datetime(data[date_column]))
+        .dropna()
+        .drop_duplicates()
+        .sort_values()
+        .reset_index(drop=True)
+    )
+
+    total_validation_weeks = (
+        n_splits * validation_weeks
+    )
+
+    initial_training_weeks = (
+        len(unique_dates)
+        - total_validation_weeks
+    )
+
+    if initial_training_weeks <= 0:
+        raise ValueError(
+            "Not enough dates for the requested "
+            "number of folds and validation weeks."
+        )
+
+    splits = []
+
+    for fold_index in range(n_splits):
+        training_end_index = (
+            initial_training_weeks
+            + fold_index * validation_weeks
+        )
+
+        validation_end_index = (
+            training_end_index
+            + validation_weeks
+        )
+
+        training_dates = unique_dates.iloc[
+            :training_end_index
+        ]
+
+        validation_dates = unique_dates.iloc[
+            training_end_index:validation_end_index
+        ]
+
+        training = data[
+            data[date_column].isin(training_dates)
+        ].copy()
+
+        validation = data[
+            data[date_column].isin(validation_dates)
+        ].copy()
+
+        validation_start = pd.Timestamp(
+            validation_dates.iloc[0]
+        )
+
+        validation_end = pd.Timestamp(
+            validation_dates.iloc[-1]
+        )
+
+        splits.append(
+            ChronologicalSplit(
+                train=training,
+                validation=validation,
+                validation_start=validation_start,
+                validation_end=validation_end,
+                validation_weeks=validation_weeks,
+            )
+        )
+
+    return splits
