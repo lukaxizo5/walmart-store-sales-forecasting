@@ -6,7 +6,7 @@ from pathlib import Path
 import pandas as pd
 from pandas.api.types import is_bool_dtype
 
-from .paths import RAW_DATA_DIR
+from .paths import RAW_DATA_DIR, PROCESSED_DATA_DIR
 
 
 @dataclass(frozen=True)
@@ -309,4 +309,58 @@ def load_merged_data(
         train=merged_train,
         test=merged_test,
         sample_submission=raw.sample_submission.copy(),
+    )
+
+def save_merged_data(
+    data: WalmartMergedData,
+    output_dir: str | Path = PROCESSED_DATA_DIR,
+) -> None:
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    data.train.to_parquet(
+        output_dir / "merged_train.parquet",
+        index=False,
+    )
+
+    data.test.to_parquet(
+        output_dir / "merged_test.parquet",
+        index=False,
+    )
+
+    data.sample_submission.to_parquet(
+        output_dir / "sample_submission.parquet",
+        index=False,
+    )
+
+def load_processed_data(
+    data_dir: str | Path = PROCESSED_DATA_DIR,
+) -> WalmartMergedData:
+    data_dir = Path(data_dir)
+
+    train_path = data_dir / "merged_train.parquet"
+    test_path = data_dir / "merged_test.parquet"
+    submission_path = data_dir / "sample_submission.parquet"
+
+    required_paths = [
+        train_path,
+        test_path,
+        submission_path,
+    ]
+
+    missing_paths = [
+        path for path in required_paths
+        if not path.exists()
+    ]
+
+    if missing_paths:
+        raise FileNotFoundError(
+            "Processed data files are missing: "
+            + ", ".join(str(path) for path in missing_paths)
+        )
+
+    return WalmartMergedData(
+        train=pd.read_parquet(train_path),
+        test=pd.read_parquet(test_path),
+        sample_submission=pd.read_parquet(submission_path),
     )
