@@ -232,3 +232,4 @@ models/*
 checkpoints/*
 !models/.gitkeep
 !checkpoints/.gitkeep
+.DS_Store
