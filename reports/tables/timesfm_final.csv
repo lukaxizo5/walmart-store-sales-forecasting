@@ -1,0 +1,2 @@
+model,model_version,checkpoint,training_mode,parameter_updates,cv_mean_wmae,cv_std_wmae,holdout_wmae,holdout_mae,holdout_rmse,holiday_mae,non_holiday_mae,model_load_seconds,holdout_predict_seconds,holdout_coverage
+TimesFM,2.5,google/timesfm-2.5-200m-pytorch,zero_shot,0,2441.6887078775558,1112.4779413500166,1706.6178810280167,1647.8244552779358,3486.8750359242304,1991.3428054289027,1629.1257205888635,105.32866852500001,10.431863428000042,0.9528065197079282

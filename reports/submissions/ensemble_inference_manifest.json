@@ -1,0 +1,19 @@
+{
+  "ensemble_name": "LightGBM-PatchTST Equal-Weight Ensemble",
+  "forecast_strategy": "heterogeneous_soft_voting_50_50",
+  "weights": {
+    "LightGBM": 0.5,
+    "PatchTST": 0.5
+  },
+  "lightgbm_model_uri": "models:/m-d85909fdb4934fbe9a97893601b86670",
+  "lightgbm_run_id": "4798f650278941f99d5e0e32a68fca3b",
+  "patchtst_registry_artifact": "wandb-registry-walmart-models/PatchTST:best",
+  "patchtst_artifact_version": "v0",
+  "patchtst_weight_training_end": "2012-01-27 00:00:00",
+  "available_input_history_end": "2012-10-26 00:00:00",
+  "test_start": "2012-11-02 00:00:00",
+  "test_end": "2013-07-26 00:00:00",
+  "rows": 115064,
+  "patchtst_neural_coverage": 0.9671313356045331,
+  "retraining_performed": false
+}

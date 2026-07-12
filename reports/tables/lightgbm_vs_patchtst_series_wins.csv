@@ -1,0 +1,3 @@
+model,series_won,series_win_rate
+PatchTST,1820,0.568039950062422
+LightGBM,1384,0.43196004993757803
