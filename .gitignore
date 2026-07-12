@@ -221,6 +221,8 @@ __marimo__/
 wandb/
 mlruns/
 artifacts/
+checkpoints/
+.ipynb_checkpoints/
 
 data/raw/*
 data/processed/*
@@ -233,3 +235,10 @@ checkpoints/*
 !models/.gitkeep
 !checkpoints/.gitkeep
 .DS_Store
+
+reports/tables/*predictions*.parquet
+reports/tables/*_rows.parquet
+
+reports/submissions/lightgbm_submission.csv
+reports/submissions/patchtst_submission.csv
+reports/submissions/timesfm_submission.csv
